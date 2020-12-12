@@ -1,49 +1,91 @@
-% Rubiks cube solver using beginners method
+% Rubiks cube solver using beginners five step method.
+% 1. Daisy on bottom
+% 2. Corners on bottom
+% 3. Middle match
+% 4. Daisy on top
+% 5. Corners on top
+
+% A human would use a seven step method:
+% rubiks
+% 1. daisy
+% 2. align corner R U R' U'
+% 3.1. F U F U F U' F' U' F'
+% 3.2 R' U' R' U' R' U R U R
+% 4. F R U R' U' F' (Daisy geel boven)
+% 5. R U R' U R U'2 R' (Midden Match)
+% 6. U R U' L' U R' U' L (Corner Match) (L’ is van je af, dus de R)  
+% 7. U R' U' R + (F)
 
 % TODO
 % input method for cubes
-% Name stuff better, e.g., move movestrs movs alg algorithm...??
 % Support for other moves (middle, etc.)
 
+global beginneralgorithm;
 global maxdepth = 10;
 global plt;
 global basicmoves;
 global rot;
 
-function cube = domovestr(movestr, cube)
+% Example usage of functions in this file.
+function example()
+  c = scramble();
+  s = solve(c);
+  animatecube2d(s,c);
+end
+
+% A 'move' is a string or cell array of string. For example:
+% "U" "U' R R' U" "L U L"
+% {"U" "R" "R'" "U'"} {"L U L" "L U L"}
+%
+% A 'cube' is column vector of the elements 1 to 54
+% If we index a 'cube' with a 'cube' we get another 'cube'.
+% We also call a 'cube' a 'permutation' when it is used to represent a 'move'.
+% For example:
+%
+% U Ui R(Ri)(U) L(U)(L)
+%
+% We can view the rotation of the cube thus in two forms: strings and column vectors.
+% The following function converts from the first representation to the second.
+function perm = move2perm(move, perm)
   global rot;
 
   if nargin < 2
-    cube = (1:54)';
+    perm = (1:54)';
   end
 
-  if iscell(movestr)
-    movestr = strjoin(movestr, " ");
+  if iscell(move)
+    move = strjoin(move, " ");
   end
 
-  if isempty(movestr)
-    return
+  if isempty(move)
+    return;
   end
 
-  for move = strsplit(strtrim(strrep(movestr, "'", "i")), " ")
-    cube = cube(rot.(move{1}));
-  end
-end
-
-function moves = buildmoves(ms)
-  moves = [];
-  for m = ms
-    moves = [moves domovestr(m)];
+  for m = strsplit(strtrim(strrep(move, "'", "i")), " ")
+    perm = perm(rot.(m{1}));
   end
 end
 
-% depth first search on cube
-function alg = search(cube, stickers, moves)
+function perms = moves2perms(moves)
+  perms = cell2mat(cellfun(@move2perm, moves, "UniformOutput", false));
+end
+
+% Depth first search with iterative deapening on cube.
+%
+% We narrow the search space by only looking if some 'stickers' are in place and
+% if we can reach such a 'cube' using a set of certain 'perms'. Our branching factor
+% is equal to the number of perms.
+%
+% Iterative deepening is search for an increasing depth. This seems like you would
+% repeat a lot of move sequences in your search and it is. However, since the bottom
+% layer of your search tree contains more nodes than all layers above it for branching
+% factors larger than 2. This does not cause much slow-down.
+function res = search(cube, stickers, perms)
   global maxdepth;
 
-  function [found alg] = _search(cube, depth, alg)
+  function [found res] = _search(cube, depth, res)
 
-    if cube(stickers) == stickers
+    if cube(stickers) == stickers % check if stickers are in place
       found = 1;
       return;
     end
@@ -54,10 +96,10 @@ function alg = search(cube, stickers, moves)
       return;
     end
 
-    for move = moves
-      [found _alg] = _search(cube(move), depth - 1, [alg move]);
+    for perm = perms % traverse search space
+      [found _res] = _search(cube(perm), depth - 1, [res perm]);
       if found
-	alg = _alg;
+	res = _res;
 	return;
       end
     end
@@ -66,7 +108,7 @@ function alg = search(cube, stickers, moves)
 
   % iterative deepening
   for depth = 0:maxdepth
-    [found alg] = _search(cube, depth, []);
+    [found res] = _search(cube, depth, []);
     if found
       return;
     end
@@ -74,30 +116,55 @@ function alg = search(cube, stickers, moves)
   
 end
 
-function [solution movs] = solve(cube, algorithm)
-  solution = {};
-  movs = [];
+% Our solve algorithm takes a 'cube' and an algorithm object.
+%
+% An 'algorithm' object is a sequence of subalgorithms, which have
+% 'steps' and 'perms'. A 'step' is a list of stickers that should be solved
+% at the end of that step. The 'perms' determine the search space for each
+% subalgorithm. Steps have share perms in this implementation.
+%
+% This function returns both the sequence of moves 'ms' and permutations 'ps'.
+%
+% We incrementally search subspaces and concatenate the solutions to get
+% our final result.
+function [ms ps] = solve(cube, algorithm)
+  global beginneralgorithm;
+
+  if nargin < 2
+    algorithm = beginneralgorithm;
+  end
+
+  ms = {};
+  ps = [];
 
   for alg = algorithm
-    alg.name
-    moves = buildmoves(alg.moves);
+    alg.name % print subalgorithm name
+    perms = moves2perms(alg.moves); % generate permutations for search
 
     for step = alg.steps
-      mov = search(cube, step{1}, moves);
-      movs = [movs mov];
+      res = search(cube, step{1}, perms); % search for solution of step
+      ps = [ps res];
 
-      for m = mov
-	cube = cube(m);
-	i = find(all(m == moves));
-	solution = [solution alg.moves(i)];
+      for perm = res
+	cube = cube(perm);
+	i = find(all(perm == perms));
+	ms = [ms alg.moves(i)];
       end
     end
   end
 end
 
-% scramble cube
-function [cube alg] = scramble(cube, moves, n)
+% Scramble a 'cube' picking form a set of 'moves' 'n' times and
+% and applying them in turn.
+%
+% Returns both the resulting 'cube' and randomly selected sequence of
+% 'n' 'moves'.
+function [cube moves] = scramble(cube, moves, n)
   global basicmoves;
+
+  if nargin < 1
+    cube = (1:54)';
+  end
 
   if nargin < 2
     moves = basicmoves;
@@ -107,14 +174,13 @@ function [cube alg] = scramble(cube, moves, n)
     n = 40;
   end
 
-  alg = {};
-  for move = moves(randi(numel(moves),1,n))
-    cube = domovestr(move, cube);
-    alg = [alg move];
+  moves = moves(randi(numel(moves),1,n));
+  for move = moves
+    cube = move2perm(move, cube);
   end
 end
 
-% plotting and animation
+% Plot a 'cube' on a two-dimensional grid.
 function plotcube2d(cube)
   global plt;
 
@@ -123,7 +189,7 @@ function plotcube2d(cube)
     plt.col(i) = idivide(cube(i)-1,9)+1;
   end
 
-  cla;
+  clf;
   axis off;
   colormap(plt.cmap);
 
@@ -133,15 +199,15 @@ function plotcube2d(cube)
        "FontSize", 14, "HorizontalAlignment", "center");
 end
 
+% For each 'move' in 'moves' plot a 'cube' in two dimensions.
 function animatecube2d(moves, cube)
   for move = moves
-    title(move, "FontSize", 20);
     plotcube2d(cube);
+    title(move, "FontSize", 20);
 %    input("press to continue ");
-    pause(0.1);
-    cube = domovestr(move, cube);
+    pause(0.01);
+    cube = move2perm(move, cube);
   end
-  % plot last update. happy, sasha? >:(
   plotcube2d(cube);
 end
 
@@ -276,8 +342,4 @@ a3.name = "middle";    a3.steps = {s31 s32 s33 s34}; a3.moves = m3;
 a4.name = "daisytop";  a4.steps = {s4};              a4.moves = m4;
 a5.name = "cornertop"; a5.steps = {s51 s52 s53 s54}; a5.moves = m5;
 
-A = [a1 a2 a3 a4 a5];
-
-% 1 test cube
-[C P] = scramble(I);
-
+beginneralgorithm = [a1 a2 a3 a4 a5];
