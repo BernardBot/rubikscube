@@ -141,6 +141,8 @@ function animatecube2d(moves, cube)
     pause(0.1);
     cube = domovestr(move, cube);
   end
+  % plot last update. happy, sasha? >:(
+  plotcube2d(cube);
 end
 
 rect = [0 0; 0 1; 1 1; 1 0]; x = [3 0]; y = [0 3];
