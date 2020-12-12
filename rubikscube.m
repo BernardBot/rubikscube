@@ -25,33 +25,30 @@ global maxdepth = 10;
 global plt;
 global basicmoves;
 global rot;
+global qube;
 
 % Example usage of functions in this file.
 function example()
   c = scramble();
   s = solve(c);
-  animatecube2d(s,c);
+  animatecube2d(c,s);
 end
 
-% A 'move' is a string or cell array of string. For example:
+% A 'move' is a string or cell array of string. 
 % "U" "U' R R' U" "L U L"
 % {"U" "R" "R'" "U'"} {"L U L" "L U L"}
+% A 'cube' is a column vector of the elements 1 to 6 repeated 9 times
 %
-% A 'cube' is column vector of the elements 1 to 54
-% If we index a 'cube' with a 'cube' we get another 'cube'.
-% We also call a 'cube' a 'permutation' when it is used to represent a 'move'.
-% For example:
+% Permutattions of a 'cube' are column vectors of the elements 1 to 54.
 %
 % U Ui R(Ri)(U) L(U)(L)
 %
 % We can view the rotation of the cube thus in two forms: strings and column vectors.
 % The following function converts from the first representation to the second.
-function perm = move2perm(move, perm)
+function perm = move2perm(move)
   global rot;
 
-  if nargin < 2
-    perm = (1:54)';
-  end
+  perm = (1:54)';
 
   if iscell(move)
     move = strjoin(move, " ");
@@ -84,8 +81,9 @@ function res = search(cube, stickers, perms)
   global maxdepth;
 
   function [found res] = _search(cube, depth, res)
+    global qube;
 
-    if cube(stickers) == stickers % check if stickers are in place
+    if cube(stickers) == qube(stickers) % check if stickers are in place
       found = 1;
       return;
     end
@@ -160,10 +158,10 @@ end
 % Returns both the resulting 'cube' and randomly selected sequence of
 % 'n' 'moves'.
 function [cube moves] = scramble(cube, moves, n)
-  global basicmoves;
+  global basicmoves qube;
 
   if nargin < 1
-    cube = (1:54)';
+    cube = qube;
   end
 
   if nargin < 2
@@ -176,7 +174,7 @@ function [cube moves] = scramble(cube, moves, n)
 
   moves = moves(randi(numel(moves),1,n));
   for move = moves
-    cube = move2perm(move, cube);
+    cube = cube(move2perm(move));
   end
 end
 
@@ -184,29 +182,22 @@ end
 function plotcube2d(cube)
   global plt;
 
-  for i = 1:54
-    plt.str(i) = num2str(cube(i));
-    plt.col(i) = idivide(cube(i)-1,9)+1;
-  end
-
   clf;
   axis off;
   colormap(plt.cmap);
 
   patch("Vertices", plt.verts, "Faces", plt.faces,...
-	"FaceVertexCData", plt.col, "FaceColor", "flat");
-  text(plt.cents(:,1), plt.cents(:,2), plt.str,...
-       "FontSize", 14, "HorizontalAlignment", "center");
+	"FaceVertexCData", cube, "FaceColor", "flat");
 end
 
 % For each 'move' in 'moves' plot a 'cube' in two dimensions.
-function animatecube2d(moves, cube)
+function animatecube2d(cube, moves)
   for move = moves
     plotcube2d(cube);
     title(move, "FontSize", 20);
 %    input("press to continue ");
-    pause(0.01);
-    cube = move2perm(move, cube);
+    pause(0.2);
+    cube = cube(move2perm(move));
   end
   plotcube2d(cube);
 end
@@ -215,22 +206,19 @@ rect = [0 0; 0 1; 1 1; 1 0]; x = [3 0]; y = [0 3];
 v = u = [];
 for i=1:3
   for j=3:-1:1
-    t = rect + [i j];
-    v = [v; t];
-    u = [u; mean(t)];
+    v = [v; rect + [i j]];
   end
 end
 
 plt.verts = [v+y; v-x; v; v+x; v+2*x; v-y];
-plt.cents = [u+y; u-x; u; u+x; u+2*x; u-y];
 plt.faces = reshape(1:216,4,54)';
-plt.str = cell(54,1);
-plt.col = zeros(54,1);
 plt.cmap = [1 1 0; 0.8 0 0; 0 0.8 0; 1 0.65 0; 0.3 0.3 0.8; 1 1 1];
 
 clear rect x y v u;
 
 % cube data
+qube = [1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 5 5 5 5 5 5 5 5 5 6 6 6 6 6 6 6 6 6]';
+
 I = (1:54)';
 
 U = [3 6 9 2 5 8 1 4 7 19 11 12 22 14 15 25 17 18 28 20 21 31 23 24 34 26 27 37 29 30 40 32 33 43 35 36 10 38 39 13 41 42 16 44 45 46 47 48 49 50 51 52 53 54]';
@@ -328,12 +316,21 @@ m5 =...
  "U R' U' R"
 };
 
+% 12 edge cubies
+De1 = [47 15]'; De2 = [49 24]'; De3 = [51 42]'; De4 = [53 33]';
+Me1 = [44 11]'; Me2 = [17 20]'; Me3 = [26 29]'; Me4 = [35 38]';
+Ue1 = [2  13]'; Ue2 = [4  40]'; Ue3 = [6  22]'; Ue4 = [8  31]';
+
+% 8 corner cubies
+Dc1 = [46 21 18]'; Dc2 = [48 12 45]'; Dc3 = [52 27 30]'; Dc4 = [54 36 39]';
+Uc1 = [1  10 43]'; Uc2 = [3  16 19]'; Uc3 = [7  34 37]'; Uc4 = [ 9 25 28]';
+
 % 5 incremental steps
-s11 = 47;        s12 = [s11; 49]; s13 = [s12; 51]; s14 = [s13; 53];
-s21 = [s14; 46]; s22 = [s21; 48]; s23 = [s22; 52]; s24 = [s23; 54];
-s31 = [s24; 11]; s32 = [s31; 20]; s33 = [s32; 29]; s34 = [s33; 38];
-s4  = [s34; 2; 4; 6; 8];
-s51 = [s4; 1];   s52 = [s51; 3];  s53 = [s52; 7];  s54 = [s53; 9];
+s11 =       De1;  s12 = [s11; De2]; s13 = [s12; De3]; s14 = [s13; De4];
+s21 = [s14; Dc1]; s22 = [s21; Dc2]; s23 = [s22; Dc3]; s24 = [s23; Dc4];
+s31 = [s24; Me1]; s32 = [s31; Me2]; s33 = [s32; Me3]; s34 = [s33; Me4];
+s4  = [s34; Ue1;              Ue2;              Ue3;              Ue4];
+s51 = [s4;  Uc1]; s52 = [s51; Uc2]; s53 = [s52; Uc3]; s54 = [s53; Uc4];
 
 % 1 algorithm
 a1.name = "daisybot";  a1.steps = {s11 s12 s13 s14}; a1.moves = m1;
