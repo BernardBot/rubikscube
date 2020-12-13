@@ -115,6 +115,9 @@ function res = search(cube, stickers, perms)
   
 end
 
+function i = findcolumn(v, vs)
+  i = find(all(v == vs), 1);
+end
 % Our solve algorithm takes a 'cube' and an algorithm object.
 %
 % An 'algorithm' object is a sequence of subalgorithms, which have
@@ -146,7 +149,7 @@ function [ms ps] = solve(cube, algorithm)
 
       for perm = res
 	cube = cube(perm);
-	i = find(all(perm == perms));
+	i = findcolumn(perm, perms);
 	ms = [ms alg.moves(i)];
       end
     end
@@ -217,6 +220,26 @@ plt.faces = reshape(1:216,4,54)';
 plt.cmap = [1 1 0; 0.8 0 0; 0 0.8 0; 1 0.65 0; 0.3 0.3 0.8; 1 1 1];
 
 clear rect x y v;
+
+% Enter a cube with the right mouse button.
+% Press any other key to end and return entered cube.
+function cube = entercube()
+  global qube plt;
+
+  cube = qube;
+  but = 1;
+  while but == 1
+    plotcube2d(cube);
+    [x y but] = ginput(1);
+
+    if but == 1
+      i = findcolumn([ceil(x) floor(y)]', plt.verts') / 4;
+      if isindex(i, 54)
+	cube(i) = mod(cube(i), 6) + 1;
+      end
+    end
+  end
+end
 
 % solved cube
 qube = [1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 5 5 5 5 5 5 5 5 5 6 6 6 6 6 6 6 6 6]';
