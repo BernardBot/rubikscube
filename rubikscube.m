@@ -5,8 +5,7 @@
 % 4. Daisy on top
 % 5. Corners on top
 
-% A human would use a seven step method:
-% rubiks
+% A human would use a seven step method.
 % 1. daisy
 % 2. align corner R U R' U'
 % 3.1. F U F U F U' F' U' F'
@@ -15,9 +14,6 @@
 % 5. R U R' U R U'2 R' (Midden Match)
 % 6. U R U' L' U R' U' L (Corner Match) (L’ is van je af, dus de R)  
 % 7. U R' U' R + (F)
-
-% TODO
-% Support for other moves (middle, etc.)
 
 global beginneralgorithm;
 global maxdepth = 10;
@@ -33,13 +29,40 @@ function example()
   animatecube2d(c,s);
 end
 
-% A 'move' is a string or cell array of string. 
+% face layout
+%   1          U
+% 2 3 4 5    L F R B
+%   6          D
+%
+% indices of stickers
+%           1  4  7
+%           2  5  8
+%           3  6  9
+% 10 13 16  19 22 25  28 31 34  37 40 43
+% 11 14 17  20 23 26  29 32 35  38 41 44
+% 12 15 18  21 24 27  30 33 36  39 42 45
+%           46 49 52
+%           47 50 53
+%           48 51 54
+
+% A 'move' is a string or cell array of string. For example:
+%
 % "U" "U' R R' U" "L U L"
 % {"U" "R" "R'" "U'"} {"L U L" "L U L"}
 %
-% A 'cube' is a column vector of the elements 1 to 6 repeated 9 times
+% Note that multiple moves can be interpreted as one single move.
+% Their representation can overlap, but multiple moves can be array of
+% arrays while moves can be strings. They have a shared representation, but also a
+% not shared one. This overlapping view is very useful for describing algorithms.
 %
-% Permutattions of a 'cube' are column vectors of the elements 1 to 54.
+% "U"     a move
+% {"U"}   a move or multiple moves
+% {{"U"}}           multiple moves
+%
+% A 'cube' is a column vector of the elements 1 to 6 repeated 9 times for each face.
+%
+% Permutattions of a 'cube' are column vectors of the elements 1 to 54. See the
+% indexing scheme above. For example:
 %
 % U Ui R(Ri)(U) L(U)(L)
 %
@@ -75,15 +98,15 @@ end
 %
 % Iterative deepening is search for an increasing depth. This seems like you would
 % repeat a lot of move sequences in your search and it is. However, since the bottom
-% layer of your search tree contains more nodes than all layers above it for branching
-% factors larger than 2. This does not cause much slow-down.
+% layer of your search tree contains more nodes than all layers above it for a
+% constant branching; this does not cause much slow-down.
 function res = search(cube, stickers, perms)
-  global maxdepth;
+  global maxdepth qube;
+
+  qubestickers = qube(stickers);
 
   function [found res] = _search(cube, depth, res)
-    global qube;
-
-    if cube(stickers) == qube(stickers) % check if stickers are in place
+    if cube(stickers) == qubestickers % check if stickers are in place
       found = 1;
       return;
     end
@@ -101,7 +124,6 @@ function res = search(cube, stickers, perms)
 	return;
       end
     end
-
   end
 
   % iterative deepening
@@ -111,7 +133,6 @@ function res = search(cube, stickers, perms)
       return;
     end
   end
-  
 end
 
 function i = findcolumn(v, vs)
@@ -200,7 +221,7 @@ function animatecube2d(cube, moves)
     plotcube2d(cube);
     title(move, "FontSize", 20);
 %    input("press to continue ");
-    pause(0.2);
+    pause(0.05);
     cube = cube(move2perm(move));
   end
   plotcube2d(cube);
@@ -223,6 +244,7 @@ clear rect x y v;
 
 % Enter a cube with the left mouse button to cycle colors.
 % Press any other key to quit and return entered cube.
+% http://matlab.izmiran.ru/help/techdoc/creating_plots/specia32.html#interactive_plotting
 function cube = entercube()
   global qube plt;
 
