@@ -25,7 +25,9 @@ global qube;
 % Example usage of functions in this file.
 function example()
   c = scramble();
+  t = time ();
   s = solve(c);
+  t = time () - t
   animatecube2d(c,s);
 end
 
@@ -216,12 +218,20 @@ function plotcube2d(cube)
 end
 
 % For each 'move' in 'moves' plot a 'cube' in two dimensions.
-function animatecube2d(cube, moves)
+function animatecube2d(cube, moves, wait)
+  if nargin < 3
+    wait = 0;
+  end
+
   for move = moves
     plotcube2d(cube);
     title(move, "FontSize", 20);
-%    input("press to continue ");
     pause(0.05);
+
+    if wait
+      input("press to continue ");
+    end	  
+
     cube = cube(move2perm(move));
   end
   plotcube2d(cube);
@@ -366,21 +376,25 @@ m5 =...
  "U R' U' R"
 };
 
+% Cubies are named by their three faces.
+% We orient the cube such that the edge or corner is in the top layer
+% to the middle or right respecively.
+%
 % 12 edge cubies
-De1 = [47 15]'; De2 = [49 24]'; De3 = [51 42]'; De4 = [53 33]';
-Me1 = [44 11]'; Me2 = [17 20]'; Me3 = [26 29]'; Me4 = [35 38]';
-Ue1 = [2  13]'; Ue2 = [4  40]'; Ue3 = [6  22]'; Ue4 = [8  31]';
+ul = [2  13]'; uf = [6  22]'; ur = [8  31]'; ub = [4  40]';
+fr = [26 29]'; rb = [35 38]'; bl = [44 11]'; lf = [17 20]';
+dl = [47 15]'; df = [49 24]'; dr = [53 33]'; db = [51 42]';
 
 % 8 corner cubies
-Dc1 = [46 21 18]'; Dc2 = [48 12 45]'; Dc3 = [52 27 30]'; Dc4 = [54 36 39]';
-Uc1 = [1  10 43]'; Uc2 = [3  16 19]'; Uc3 = [7  34 37]'; Uc4 = [ 9 25 28]';
+ubl = [1  43 10]'; ulf = [3  16 19]'; ufr = [9  25 28]'; ulb = [7  34 37]';
+dbr = [54 39 36]'; drf = [52 30 27]'; dfl = [46 21 18]'; dlb = [48 12 45]';
 
 % 5 incremental steps
-s11 =       De1;  s12 = [s11; De2]; s13 = [s12; De3]; s14 = [s13; De4];
-s21 = [s14; Dc1]; s22 = [s21; Dc2]; s23 = [s22; Dc3]; s24 = [s23; Dc4];
-s31 = [s24; Me1]; s32 = [s31; Me2]; s33 = [s32; Me3]; s34 = [s33; Me4];
-s4  = [s34; Ue1;              Ue2;              Ue3;              Ue4];
-s51 = [s4;  Uc1]; s52 = [s51; Uc2]; s53 = [s52; Uc3]; s54 = [s53; Uc4];
+s11 =       dl;   s12 = [s11; df];  s13 = [s12; dr];  s14 = [s13; db];
+s21 = [s14; dbr]; s22 = [s21; drf]; s23 = [s22; dfl]; s24 = [s23; dlb];
+s31 = [s24; fr];  s32 = [s31; rb];  s33 = [s32; bl];  s34 = [s33; lf];
+s4  = [s34; ul;               uf;               ur;               ub];
+s51 = [s4;  ubl]; s52 = [s51; ulf]; s53 = [s52; ufr]; s54 = [s53; ulb];
 
 % 1 algorithm
 a1.name = "daisybot";  a1.steps = {s11 s12 s13 s14}; a1.moves = m1;
