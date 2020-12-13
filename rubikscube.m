@@ -17,7 +17,6 @@
 % 7. U R' U' R + (F)
 
 % TODO
-% input method for cubes
 % Support for other moves (middle, etc.)
 
 global beginneralgorithm;
@@ -118,6 +117,7 @@ end
 function i = findcolumn(v, vs)
   i = find(all(v == vs), 1);
 end
+
 % Our solve algorithm takes a 'cube' and an algorithm object.
 %
 % An 'algorithm' object is a sequence of subalgorithms, which have
@@ -221,8 +221,8 @@ plt.cmap = [1 1 0; 0.8 0 0; 0 0.8 0; 1 0.65 0; 0.3 0.3 0.8; 1 1 1];
 
 clear rect x y v;
 
-% Enter a cube with the right mouse button.
-% Press any other key to end and return entered cube.
+% Enter a cube with the left mouse button to cycle colors.
+% Press any other key to quit and return entered cube.
 function cube = entercube()
   global qube plt;
 
