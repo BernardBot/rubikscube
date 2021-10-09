@@ -1,0 +1,92 @@
+6 kanten
+6 kleuren
+24 vlakjes
+8 cubies
+- 8 posities (3 bits)
+- 3 rotaties (2 bits)
+- 8 * 5 = 40 bits == 1 integer (max 53)
+0   1   2   3   4   5   6   7   | 0 0 0 0 0 0 0 0
+000 000 000 000 000 000 000 000   00 00 00 00 00 00 00
+
+00 01 10
+10 01 00
+ 
+3 bits for rotato
+001 010 100
+rl = n => ((n << 1) & 7) | (n >> 2)
+
+100 010 001
+rr = n => ((n << 2) & 7) | (n >> 1)
+
+  00
+  00
+11223344
+11223344
+  55
+  55
+
+cubie layout
+  01
+  23
+02233110
+64455776
+  45
+  67
+
+0 = UBL 4 = DFL
+1 = URB 5 = DRF
+2 = ULF 6 = DLB
+3 = UFR 7 = DBR
+
+ab
+cd
+->
+ca
+db
+
+abcd -> cadb
+0123 -> 2031
+0264
+2345
+3157
+1076
+4567
+
+  01
+  32
+03322110
+74455667
+  45
+  76
+
+0123 -> 3012
+0347 -> 7034
+
+00|01|02|03|04|05 06|07|08|09|10|11 12|13|14|15|16|17 18|19|20|21|22|23 24|25|26|27|28|29 30|31|32|33|34|35 36|37|38|39|40|41 42|43|44|45|46|47
+
+position mask
+rotation mask = position mask << (6 * 3)
+other mask = ~(position mask | rotation mask)
+0      1      2      3      4      5      6      7
+000000 000000 000000 000000 000000 000000 000000 000000 
+111111 111111 111111 111111 
+                            111111 111111 111111 111111 
+
+              111111 111111 111111 111111
+111111 111111                             111111 111111
+
+111111               111111 111111               111111
+       111111 111111               111111 111111
+
+
+3 * 24 = 72 bits nodig (-3 want fix one degree one cubie)
+miss minder dan 24 want symmetrie etc
+
+-- operaties --
+hash (kan ook het ding zelf zijn als vertegenwoordigd door nummers)
+6 zetten
+is opgelost?
+parse
+print
+draw
+solve
