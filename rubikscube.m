@@ -102,35 +102,35 @@ end
 % repeat a lot of move sequences in your search and it is. However, since the bottom
 % layer of your search tree contains more nodes than all layers above it for a
 % constant branching; this does not cause much slow-down.
+function [found res] = _search(cube, depth, res, stickers, qubestickers, perms)
+  if cube(stickers) == qubestickers % check if stickers are in place
+    found = 1;
+    return;
+  end
+
+  found = 0;
+
+  if depth <= 0
+    return;
+  end
+
+  for perm = perms % traverse search space
+    [found _res] = _search(cube(perm), depth - 1, [res perm], stickers, qubestickers, perms);
+    if found
+res = _res;
+return;
+    end
+  end
+end
+
 function res = search(cube, stickers, perms)
   global maxdepth qube;
 
   qubestickers = qube(stickers);
 
-  function [found res] = _search(cube, depth, res)
-    if cube(stickers) == qubestickers % check if stickers are in place
-      found = 1;
-      return;
-    end
-
-    found = 0;
-
-    if depth <= 0
-      return;
-    end
-
-    for perm = perms % traverse search space
-      [found _res] = _search(cube(perm), depth - 1, [res perm]);
-      if found
-	res = _res;
-	return;
-      end
-    end
-  end
-
   % iterative deepening
   for depth = 0:maxdepth
-    [found res] = _search(cube, depth, []);
+    [found res] = _search(cube, depth, [], stickers, qubestickers, perms);
     if found
       return;
     end
